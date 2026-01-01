@@ -53,6 +53,43 @@ const registerUser = async (req, res) => {
   }
 };
 
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    // Must be verified
+    if (!user.is_verified)
+      return res.status(403).json({ message: "Account not verified. Please check your email for OTP." });
+
+    // Check password
+    const isMatch = await comparePassword(password, user.password_hash);
+    if (!isMatch) return res.status(401).json({ message: "Invalid password." });
+
+    // Generate JWT
+    const token = generateToken(user);
+
+    return res.json({
+      message: "Login successful",
+      token,
+      user: {
+        user_id: user.user_id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        language: user.language
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error." });
+  }
+};
+
 const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -88,5 +125,6 @@ const verifyOTP = async (req, res) => {
 
 export {
   registerUser,
+  loginUser,
   verifyOTP
 }
