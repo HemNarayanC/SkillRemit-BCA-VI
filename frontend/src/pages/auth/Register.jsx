@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import {
   Eye,
@@ -11,8 +12,12 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { FaGoogle, FaFacebookF, FaLinkedinIn } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 const Register = () => {
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
   const roles = [
     { id: "jobseeker", label: "Job Seeker" },
     { id: "employer", label: "Employer" },
@@ -48,7 +53,7 @@ const Register = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
 
@@ -67,13 +72,26 @@ const Register = () => {
       return;
     }
 
-    setLoading(true);
-
-    // Simulate backend submission
-    setTimeout(() => {
+    try {
+      setLoading(true);
+      const res = await register(formData);
+      setSuccessMsg(res.message); // "User registered. OTP sent to email."
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        role: "jobseeker",
+        agree: false,
+      });
+      navigate("/auth/verify-otp", { state: { email: formData.email } });
+    } catch (err) {
+      console.error(err);
+      setErrors({ api: err.response?.data?.message || "Registration failed" });
+    } finally {
       setLoading(false);
-      console.log("Register data:", formData);
-    }, 1500);
+    }
   };
 
   return (
@@ -284,9 +302,9 @@ const Register = () => {
                 {/* SIGN IN LINK */}
                 <p className="text-center text-sm text-gray-600 pt-3">
                   Already have an account?{" "}
-                  <button className="text-blue-600 font-semibold">
+                  <Link className="text-blue-600 font-semibold" to="/auth/login">
                     Sign in
-                  </button>
+                  </Link >
                 </p>
               </form>
 
