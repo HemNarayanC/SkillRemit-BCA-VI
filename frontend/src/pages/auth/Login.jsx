@@ -2,8 +2,10 @@ import { useState } from "react";
 import Lottie from "lottie-react";
 import { Eye, EyeOff, Lock, Mail, KeyRound } from "lucide-react";
 import { FaGoogle, FaFacebookF, FaLinkedinIn } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -23,7 +25,7 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
 
@@ -38,16 +40,20 @@ const Login = () => {
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await login({ email: formData.email, password: formData.password });
+      console.log("Logged in user:", res.user);
+      setFormData({
+        email: "",
+        password: "",
+        rememberMe: false,
+      });
+    } catch (err) {
+      console.error(err);
+      setServerError(err.message || "Server error");
+    } finally {
       setLoading(false);
-      if (forgotMode) {
-        console.log("Forgot password email sent to:", formData.email);
-        alert("Password reset link sent to your email");
-        setForgotMode(false);
-      } else {
-        console.log("Sign in:", formData);
-      }
-    }, 1500);
+    }
   };
 
   return (
