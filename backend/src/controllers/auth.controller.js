@@ -72,6 +72,14 @@ const loginUser = async (req, res) => {
     // Generate JWT
     const token = generateToken(user);
 
+    // Set cookie
+    res.cookie('jwt', token, {
+      httpOnly: true,   // JS cannot access
+      secure: process.env.NODE_ENV === 'production', // HTTPS only
+      sameSite: 'Strict', // CSRF protection
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    });
+
     return res.json({
       message: "Login successful",
       token,
@@ -123,8 +131,19 @@ const verifyOTP = async (req, res) => {
   }
 };
 
+const logoutUser = (req, res) => {
+  res.clearCookie('jwt', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+  res.json({ message: 'Logged out successfully' });
+};
+
+
 export {
   registerUser,
   loginUser,
-  verifyOTP
+  verifyOTP,
+  logoutUser
 }
