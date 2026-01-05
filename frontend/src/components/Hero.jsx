@@ -60,30 +60,46 @@ const Hero = () => {
       {/* Background Navy Shape */}
       <div className="absolute top-0 right-0 w-[45%] h-full bg-navy rounded-bl-[15rem] -z-10 hidden lg:block" />
 
-      <div className="grid lg:grid-cols-2 gap-12 items-center w-full">
-        <div className="hero-content space-y-8 max-w-2xl">
-          <h1 className="text-6xl md:text-7xl font-bold text-navy leading-[1.1] font-audiowide">
-            Find the perfect <br />
-            <span className="text-navy">job for you</span>
+      <div className="grid lg:grid-cols-[4fr_2fr] gap-4 items-center w-full">
+        <div className="hero-content space-y-8">
+          <h1 className="text-6xl md:text-[56px] font-bold text-navy leading-tight md:leading-[1.25] font-audiowide text-center">
+            Bridging Borders, Building Careers:
+            <br />
+            <span>Your Global Skills, Local Opportunities.</span>
           </h1>
-          <p className="text-xl text-navy/60">Search your career opportunity through 12,800 jobs</p>
 
-          <div className="bg-surface p-2 rounded-full shadow-xl shadow-blue-900/5 flex items-center gap-2 max-w-xl border border-blue-100">
-            <div className="flex-1 flex items-center gap-3 px-4">
-              <span className="text-navy/30">Job Title or Keyword</span>
+          <p className="text-md text-center w-[80%] mx-auto text-navy/60 leading-relaxed md:leading-[1.7]">
+            SkillLink Remit connects Nepalese migrant workers with employers in Nepal through AI-powered skill matching and training
+          </p>
+
+          <div className="flex justify-center mt-20">
+            <div className="bg-card p-0.5 rounded-full shadow-md shadow-[var(--blue-glow)] flex items-center gap-3 w-full max-w-2xl border border-border overflow-hidden">
+
+              {/* Job input */}
+              <div className="flex-1 flex items-center gap-3 px-5">
+                <Search className="w-5 h-5 text-primary/70" />
+                <input type="text" placeholder="Job title or keyword" className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+              </div>
+
+              {/* Divider */}
+              <div className="h-10 w-px bg-border" />
+
+              {/* Location */}
+              <button className="flex items-center gap-2 px-5 text-sm text-foreground hover:text-primary transition-colors">
+                <MapPin className="w-5 h-5 text-primary" />
+                <span className="font-medium">All Locations</span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </button>
+
+              {/* Search button */}
+              <button className="bg-primary hover:bg-primary p-4 text-primary-foreground transition-all shadow-md hover:cursor-pointer">
+                <Search className="w-5 h-5" />
+              </button>
+
             </div>
-            <div className="h-10 w-px bg-slate-200" />
-            <div className="flex items-center gap-2 px-4 cursor-pointer">
-              <MapPin className="w-5 h-5 text-primary" />
-              <span className="font-medium text-navy">All Locations</span>
-              <ChevronDown className="w-4 h-4 text-navy/40" />
-            </div>
-            <button className="bg-primary hover:bg-navy p-4 rounded-full text-white transition-all">
-              <Search className="w-6 h-6" />
-            </button>
           </div>
 
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <p className="text-sm font-bold text-navy/80 uppercase tracking-wider">Popular Searches</p>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
@@ -95,20 +111,20 @@ const Hero = () => {
                 </button>
               ))}
             </div>
-          </div>
+          </div> */}
 
           {/* Logos */}
-          <div className="pt-12 flex flex-wrap gap-8 items-center opacity-40">
+          {/* <div className="pt-12 flex flex-wrap gap-8 items-center opacity-40">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="flex items-center gap-2 grayscale">
                 <div className="w-6 h-6 bg-navy rounded-sm" />
                 <span className="font-bold text-navy">LOGOIPSUM</span>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
 
-        <div className="hero-image-stack relative h-150 flex items-center justify-center">
+        <div className="hero-image-stack relative h-150 flex items-center justify-center -left-32">
           {/* Blue decorative layered cards */}
           <div className="absolute w-113.5 h-145.5 bg-secondary-foreground rounded-[3rem] rotate-[-8deg] opacity-90 translate-x-12" />
           <div className="absolute w-113.5 h-145.5 bg-accent rounded-[3rem] rotate-[-4deg] opacity-70 translate-x-6" />
@@ -123,7 +139,7 @@ const Hero = () => {
           </div>
 
           {/* Floating Stats Card with Glassmorphism */}
-          <div className="absolute bottom-12 -right-4 bg-white/20 backdrop-blur-md border border-white/30 rounded-4xl shadow-lg max-w-70 p-8 animate-float">
+          <div className="absolute bottom-12 -right-12 bg-white/20 backdrop-blur-md border border-white/30 rounded-4xl shadow-lg max-w-70 p-8 animate-float">
             <div className="space-y-6">
               {[
                 { count: 319, title: "job offers", sub: "in Business Development" },
@@ -132,10 +148,19 @@ const Hero = () => {
               ].map((item, idx) => (
                 <div key={idx} className="space-y-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-navy">{item.count}</span>
-                    <span className="font-bold text-navy">{item.title}</span>
+                    {/* Count */}
+                    <span className="text-3xl font-bold text-navy font-quantico">
+                      {item.count}
+                    </span>
+                    {/* Title */}
+                    <span className="font-bold text-navy font-exo">
+                      {item.title}
+                    </span>
                   </div>
-                  <p className="text-xs text-navy/40 font-medium">{item.sub}</p>
+                  {/* Subtitle */}
+                  <p className="text-xs text-navy/40 font-medium font-exo">
+                    {item.sub}
+                  </p>
                 </div>
               ))}
             </div>
