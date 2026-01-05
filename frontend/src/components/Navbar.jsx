@@ -29,7 +29,7 @@ const Navbar = () => {
       <div className="container mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="text-2xl font-bold text-foreground tracking-tight">
-          Jobster
+          DeshSkill
         </Link>
 
         {/* Navigation Links */}
@@ -51,7 +51,7 @@ const Navbar = () => {
 
         {/* Sign In Button */}
         <Link
-          to="/signin"
+          to="/auth/login"
           className="px-5 py-2.5 rounded-lg border border-foreground/20 text-background text-sm font-medium hover:bg-foreground hover:text-background transition-all duration-200"
         >
           Sign in
