@@ -76,7 +76,7 @@ const loginUser = async (req, res) => {
     res.cookie('jwt', token, {
       httpOnly: true,   // JS cannot access
       secure: process.env.NODE_ENV === 'production', // HTTPS only
-      sameSite: 'lax', // CSRF protection
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 1 day
     });
 
@@ -98,6 +98,24 @@ const loginUser = async (req, res) => {
     return res.status(500).json({ message: "Server error." });
   }
 };
+
+const googleLogin = async (req, res) => {
+  if (!req.user) return res.redirect(`${process.env.FRONTEND_URL}/auth/login?error=google`);
+
+  const token = generateToken(req.user);
+
+  // Store token in HTTP-only cookie
+  res.cookie('jwt', token, {
+    httpOnly: true,   // JS cannot access
+    secure: process.env.NODE_ENV === 'production', // HTTPS only
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  });
+
+  // Redirect to frontend
+  // console.log("Google OAuth successful, redirecting to frontend.", `${process.env.FRONTEND_URL}/auth/oauth-success`);
+  res.redirect(`${process.env.FRONTEND_URL}/auth/oauth-success`);
+}
 
 const verifyOTP = async (req, res) => {
   try {
@@ -141,18 +159,32 @@ const logoutUser = (req, res) => {
   res.json({ message: 'Logged out successfully' });
 };
 
-const isAuthenticated = (req, res) => {
+const isAuthenticated = async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
+    // console.log("Authenticated user from isAuthenticated:", req.user);
+
     // Return user info (from token)
-    const { user_id, name, email, role, language } = req.user;
+    const { user_id, email, role } = req.user;
+
+    // Fetch profile_image from DB
+    const userFromDb = await User.findOne({
+      where: { user_id },
+      attributes: ['name', 'language', 'profile_image']
+    });
+
+    if (!userFromDb) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { name, language, profile_image } = userFromDb;
 
     return res.json({
       authenticated: true,
-      user: { user_id, name, email, role, language }
+      user: { user_id, name, email, role, language, profile_image }
     });
   } catch (err) {
     console.error("Auth check error:", err);
@@ -195,5 +227,6 @@ export {
   verifyOTP,
   logoutUser,
   getUserProfile,
-  isAuthenticated
+  isAuthenticated,
+  googleLogin
 }
