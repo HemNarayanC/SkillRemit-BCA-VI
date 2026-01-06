@@ -44,6 +44,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -75,6 +76,7 @@ const Register = () => {
     try {
       setLoading(true);
       const res = await register(formData);
+      const userEmail = formData.email;
       setSuccessMsg(res.message); // "User registered. OTP sent to email."
       setFormData({
         name: "",
@@ -85,13 +87,22 @@ const Register = () => {
         role: "jobseeker",
         agree: false,
       });
-      navigate("/auth/verify-otp", { state: { email: formData.email } });
+      navigate("/auth/verify-otp", { state: { email: userEmail } });
+      // if (res.message && res.message.includes("OTP sent")) {
+      //   navigate("/auth/verify-otp", { state: { email: userEmail } });
+      // } else {
+      //   alert(res.message || "Registration successful!");
+      // }
     } catch (err) {
       console.error(err);
       setErrors({ api: err.response?.data?.message || "Registration failed" });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleContinueWithgGoogle = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
   };
 
   return (
@@ -314,13 +325,13 @@ const Register = () => {
                   Or sign up with
                 </p>
                 <div className="flex gap-2">
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm">
+                  <button onClick={handleContinueWithgGoogle} className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm hover:cursor-pointer">
                     <FaGoogle className="text-red-500" /> Google
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm">
+                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm hover:cursor-pointer">
                     <FaFacebookF className="text-blue-600" /> Facebook
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm">
+                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm hover:cursor-pointer">
                     <FaLinkedinIn className="text-blue-700" /> LinkedIn
                   </button>
                 </div>

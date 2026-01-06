@@ -3,9 +3,11 @@ import Lottie from "lottie-react";
 import { Eye, EyeOff, Lock, Mail, KeyRound } from "lucide-react";
 import { FaGoogle, FaFacebookF, FaLinkedinIn } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -42,18 +44,23 @@ const Login = () => {
 
     try {
       const res = await login({ email: formData.email, password: formData.password });
-      console.log("Logged in user:", res.user);
+      // console.log("Logged in user:", res.user);
       setFormData({
         email: "",
         password: "",
         rememberMe: false,
       });
+      navigate('/');
     } catch (err) {
       console.error(err);
       setServerError(err.message || "Server error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleContinueWithgGoogle = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
 
   return (
@@ -224,13 +231,13 @@ const Login = () => {
                   Or continue with
                 </p>
                 <div className="flex gap-3">
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground">
+                  <button onClick={handleContinueWithgGoogle} className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground hover:cursor-pointer">
                     <FaGoogle className="text-destructive" /> Google
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground">
+                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground hover:cursor-pointer">
                     <FaFacebookF className="text-primary" /> Facebook
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground">
+                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground hover:cursor-pointer">
                     <FaLinkedinIn className="text-secondary" /> LinkedIn
                   </button>
                 </div>
