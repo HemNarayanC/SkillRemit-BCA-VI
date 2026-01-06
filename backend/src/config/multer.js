@@ -12,6 +12,20 @@ const userProfileStorage = new CloudinaryStorage({
   },
 });
 
+const uploadGoogleProfileImage = async (googleImageUrl, email) => {
+  try {
+    const uploadResult = await cloudinary.uploader.upload(googleImageUrl, {
+      folder: "remittance/user-profiles",
+      public_id: `user_${email.split("@")[0]}`,
+      overwrite: true,
+    });
+    return uploadResult.secure_url; // Cloudinary URL
+  } catch (err) {
+    console.error("Cloudinary upload failed:", err);
+    return null;
+  }
+};
+
 // JobSeeker Documents (optional work verification)
 const jobSeekerDocumentStorage = new CloudinaryStorage({
   cloudinary,
@@ -90,4 +104,5 @@ export {
   uploadJobSeekerDocuments,
   uploadEmployerDocuments,
   uploadJobImage,
+  uploadGoogleProfileImage,
 };
