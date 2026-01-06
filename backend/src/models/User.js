@@ -16,22 +16,35 @@ const User = sequelize.define('User', {
     allowNull: false,
     unique: true
   },
+  google_id: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    unique: true
+  },
   phone: {
     type: DataTypes.STRING(20)
   },
+  profile_image: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
   password_hash: {
     type: DataTypes.STRING(255),
-    allowNull: false
+    allowNull: true
   },
   role: {
-    type: DataTypes.ENUM('jobseeker','employer','trainer','admin'),
+    type: DataTypes.ENUM('jobseeker', 'employer', 'trainer', 'admin'),
     allowNull: false
   },
   language: {
-    type: DataTypes.ENUM('en','ne'),
+    type: DataTypes.ENUM('en', 'ne'),
     defaultValue: 'en'
   },
   is_verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  is_deleted: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   }
