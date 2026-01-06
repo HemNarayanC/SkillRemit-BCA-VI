@@ -7,7 +7,8 @@ export const createJob = async (req, res) => {
       return res.status(403).json({ message: 'Employer not verified or profile missing' });
     }
 
-    const { title, description, location, salary_min, salary_max } = req.body;
+    const { title, description, location, salary_min, salary_max, skills_required } = req.body;
+    const image = req.file ? req.file.path : null;
 
     const job = await Job.create({
       employer_id: employer.employer_id,
@@ -15,7 +16,9 @@ export const createJob = async (req, res) => {
       description,
       location,
       salary_min,
-      salary_max
+      salary_max,
+      image,
+      skills_required
     });
 
     return res.status(201).json({ message: 'Job created', job });
@@ -49,7 +52,17 @@ export const updateJob = async (req, res) => {
     const job = await Job.findOne({ where: { job_id, employer_id: employer.employer_id } });
     if (!job) return res.status(404).json({ message: 'Job not found or not yours' });
 
-    await job.update(req.body);
+    const { title, description, location, salary_min, salary_max, image, skills_required } = req.body;
+
+    await job.update({
+      title: title || job.title,
+      description: description || job.description,
+      location: location || job.location,
+      salary_min: salary_min || job.salary_min,
+      salary_max: salary_max || job.salary_max,
+      image: image || job.image,
+      skills_required: skills_required || job.skills_required
+    });
     return res.json({ message: 'Job updated', job });
   } catch (err) {
     console.error(err);
