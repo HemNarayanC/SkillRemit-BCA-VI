@@ -1,11 +1,27 @@
-import { createContext, useContext, useState } from "react";
-import { register, login, logout } from "../api/authApi";
+import { createContext, useContext, useState, useEffect } from "react";
+import { register, login, logout, isAuthenticated } from "../api/authApi";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // user info
   const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const data = await isAuthenticated();
+        setUser(data.user);
+      } catch (err) {
+        setUser(null);
+        console.log("Not authenticated on load");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const handleRegister = async (userData) => {
     setLoading(true);
@@ -22,7 +38,7 @@ export const AuthProvider = ({ children }) => {
   const handleLogin = async (credentials) => {
     setLoading(true);
     try {
-      const data = await login(credentials, { withCredentials: true });
+      const data = await login(credentials);
       setUser(data.user); // store user info in state only
       setLoading(false);
       return data;
@@ -34,7 +50,7 @@ export const AuthProvider = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      await logout({ withCredentials: true });
+      await logout();
       setUser(null);
     } catch (err) {
       console.error("Logout failed:", err);
