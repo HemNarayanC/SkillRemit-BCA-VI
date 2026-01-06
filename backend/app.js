@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import passport from "./src/config/passport.js";
+import session from "express-session";
 import authRoutes from "./src/routes/auth.routes.js";
 import userRoutes from "./src/routes/user.routes.js"
 import employerRoutes from "./src/routes/employer.routes.js";
@@ -26,6 +28,15 @@ app.use(cors({
   credentials: true,
 }));
 
+// Session required for passport
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
