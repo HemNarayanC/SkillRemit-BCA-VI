@@ -64,9 +64,9 @@ const Navbar = () => {
             <>
               {/* Profile Picture or Icon */}
               <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-300">
-                {user.profilePicture ? (
+                {user.profile_image ? (
                   <img
-                    src={user.profilePicture}
+                    src={user.profile_image || "/default-avatar.png"}
                     alt={user.name}
                     className="w-full h-full object-cover"
                   />
