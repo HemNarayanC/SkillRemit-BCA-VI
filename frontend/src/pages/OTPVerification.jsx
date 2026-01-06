@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
 import Lottie from "lottie-react";
 import { verifyOTP, resendOTP } from "../api/authApi";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const OTPVerification = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const initialEmail = location.state?.email || "";
   const otpLength = 6;
 
@@ -88,7 +89,7 @@ const OTPVerification = () => {
       setLoading(true);
       const response = await verifyOTP({ email, otp: otpCode });
       setSuccessMsg(response.message);
-      Navigate("/auth/login");
+      navigate("/auth/login");
     } catch (err) {
       console.error(err);
       setError(err?.message || "OTP verification failed.");
@@ -182,10 +183,8 @@ const OTPVerification = () => {
 
         {/* RIGHT: Lottie */}
         <div className="hidden lg:flex items-center justify-center bg-navy/5 p-8">
-          <Lottie
-            path="/otp_animation.json"
-            loop
-            autoplay
+          <img
+            src="/otp.png"
             className="w-full max-w-sm"
           />
         </div>
