@@ -76,7 +76,7 @@ const loginUser = async (req, res) => {
     res.cookie('jwt', token, {
       httpOnly: true,   // JS cannot access
       secure: process.env.NODE_ENV === 'production', // HTTPS only
-      sameSite: 'Strict', // CSRF protection
+      sameSite: 'lax', // CSRF protection
       maxAge: 24 * 60 * 60 * 1000 // 1 day
     });
 
@@ -85,9 +85,10 @@ const loginUser = async (req, res) => {
       token,
       user: {
         user_id: user.user_id,
-        full_name: user.full_name,
+        full_name: user.name,
         email: user.email,
         role: user.role,
+        profile: user.profile_image,
         language: user.language
       }
     });
@@ -140,10 +141,59 @@ const logoutUser = (req, res) => {
   res.json({ message: 'Logged out successfully' });
 };
 
+const isAuthenticated = (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    // Return user info (from token)
+    const { user_id, name, email, role, language } = req.user;
+
+    return res.json({
+      authenticated: true,
+      user: { user_id, name, email, role, language }
+    });
+  } catch (err) {
+    console.error("Auth check error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getUserProfile = async (req, res) => {
+  console.log("Fetching profile for user_id:", req.user);
+  try {
+    const user = await User.findOne({
+      where: { user_id: req.user.user_id, is_deleted: false },
+      attributes: [
+        "user_id",
+        "name",
+        "email",
+        "phone",
+        "profile_image",
+        "role",
+        "language",
+        "created_at"
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({ user });
+  } catch (err) {
+    console.error("Fetch profile error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 export {
   registerUser,
   loginUser,
   verifyOTP,
-  logoutUser
+  logoutUser,
+  getUserProfile,
+  isAuthenticated
 }
