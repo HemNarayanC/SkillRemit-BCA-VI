@@ -69,4 +69,37 @@ const resendOTP = async (email) => {
   }
 };
 
-export { register, login, logout, isAuthenticated, verifyOTP, resendOTP };
+const forgotPassword = async (email) => {
+  try {
+    const response = await api.post(
+      "/auth/forgot-password",
+      { email },
+      { withCredentials: true }
+    );
+    return response.data; // { message: "OTP sent to your email" }
+  } catch (err) {
+    console.error("Forgot Password error:", err);
+    throw err.response?.data || { message: "Server error" };
+  }
+};
+
+const resetPassword = async ({ email, otp, newPassword }) => {
+  try {
+    const response = await api.post(
+      "/auth/reset-password",
+      { email, otp, newPassword },
+      { withCredentials: true }
+    );
+    return response.data; // { message: "Password reset successful" }
+  } catch (err) {
+    console.error("Reset Password error:", err);
+    throw err.response?.data || { message: "Server error" };
+  }
+};
+
+const setPassword = async (password) => {
+  const res = await api.post("/auth/set-password", { password }, { withCredentials: true });
+  return res.data;
+};
+
+export { register, login, logout, isAuthenticated, verifyOTP, resendOTP, forgotPassword, resetPassword, setPassword };
