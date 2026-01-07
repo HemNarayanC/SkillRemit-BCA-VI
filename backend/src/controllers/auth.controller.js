@@ -99,8 +99,8 @@ const loginUser = async (req, res) => {
   }
 };
 
-const googleLogin = async (req, res) => {
-  if (!req.user) return res.redirect(`${process.env.FRONTEND_URL}/auth/login?error=google`);
+const oauthLogin = async (req, res) => {
+  if (!req.user) return res.redirect(`${process.env.FRONTEND_URL}/auth/login?error=oauth`);
 
   const token = generateToken(req.user);
 
@@ -220,6 +220,66 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log("Received email:", email);
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.is_verified)
+      return res.status(403).json({ message: "User not verified" });
+
+    await OTPVerification.update(
+      { is_used: true },
+      { where: { user_id: user.user_id, type: 'password_reset' } }
+    );
+
+    await createAndSendOTP(user, 'password_reset');
+
+    res.json({ message: "OTP sent to your email" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const otpRecord = await OTPVerification.findOne({
+      where: {
+        user_id: user.user_id,
+        otp_code: otp,
+        type: 'password_reset',
+        is_used: false,
+        expires_at: { [Op.gt]: new Date() }
+      }
+    });
+
+    if (!otpRecord)
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+
+    user.password_hash = await hashPassword(newPassword);
+    await user.save();
+
+    otpRecord.is_used = true;
+    await otpRecord.save();
+
+    res.json({ message: "Password reset successful" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 export {
   registerUser,
@@ -228,5 +288,8 @@ export {
   logoutUser,
   getUserProfile,
   isAuthenticated,
-  googleLogin
+  oauthLogin,
+  setPassword,
+  forgotPassword,
+  resetPassword
 }
