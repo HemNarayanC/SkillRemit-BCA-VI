@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, forgotPassword } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -54,6 +54,30 @@ const Login = () => {
     } catch (err) {
       console.error(err);
       setServerError(err.message || "Server error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setErrors({});
+
+    if (!formData.email) {
+      setErrors({ email: "Email is required" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await forgotPassword(formData.email); // call API
+      alert(res.message); // "OTP sent to your email"
+
+      // Navigate to Reset Password page with email
+      navigate("/auth/reset-password", { state: { email: formData.email } });
+
+    } catch (err) {
+      console.error(err);
+      setErrors({ api: err.message || "Server error" });
     } finally {
       setLoading(false);
     }
@@ -182,7 +206,8 @@ const Login = () => {
 
               {/* SUBMIT */}
               <button
-                type="submit"
+                type="button"
+                onClick={handleForgotPassword}
                 disabled={loading}
                 className="mt-8 w-full rounded-full bg-primary py-3 font-exo font-semibold text-primary-foreground transition hover:bg-secondary flex items-center justify-center gap-2"
               >
