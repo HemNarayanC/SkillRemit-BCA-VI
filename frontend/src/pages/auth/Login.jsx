@@ -63,6 +63,10 @@ const Login = () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
 
+  const handleContinueWithFacebook = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/facebook`;
+  };
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center justify-center px-4 py-8">
@@ -188,7 +192,7 @@ const Login = () => {
                     Please wait...
                   </>
                 ) : forgotMode ? (
-                  "Send reset link"
+                  "Send reset OTP"
                 ) : (
                   <>
                     Sign in <span>→</span>
@@ -232,13 +236,13 @@ const Login = () => {
                 </p>
                 <div className="flex gap-3">
                   <button onClick={handleContinueWithgGoogle} className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground hover:cursor-pointer">
-                    <FaGoogle className="text-destructive" /> Google
+                    <FaGoogle className="text-red-500" /> Google
+                  </button>
+                  <button onClick={handleContinueWithFacebook} className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground hover:cursor-pointer">
+                    <FaFacebookF className="text-blue-600" /> Facebook
                   </button>
                   <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground hover:cursor-pointer">
-                    <FaFacebookF className="text-primary" /> Facebook
-                  </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-border py-2 text-sm font-exo text-foreground hover:cursor-pointer">
-                    <FaLinkedinIn className="text-secondary" /> LinkedIn
+                    <FaLinkedinIn className="text-blue-700" /> LinkedIn
                   </button>
                 </div>
               </div>
