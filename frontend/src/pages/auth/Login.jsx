@@ -205,25 +205,40 @@ const Login = () => {
               )}
 
               {/* SUBMIT */}
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                disabled={loading}
-                className="mt-8 w-full rounded-full bg-primary py-3 font-exo font-semibold text-primary-foreground transition hover:bg-secondary flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></span>
-                    Please wait...
-                  </>
-                ) : forgotMode ? (
-                  "Send reset OTP"
-                ) : (
-                  <>
-                    Sign in <span>→</span>
-                  </>
-                )}
-              </button>
+              {forgotMode ? (
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={loading}
+                  className="mt-8 w-full rounded-full bg-primary py-3 font-exo font-semibold text-primary-foreground transition hover:bg-secondary flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></span>
+                      Please wait...
+                    </>
+                  ) : (
+                    "Send reset OTP"
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="submit" // Important: type="submit" calls form's onSubmit
+                  disabled={loading}
+                  className="mt-8 w-full rounded-full bg-primary py-3 font-exo font-semibold text-primary-foreground transition hover:bg-secondary flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></span>
+                      Please wait...
+                    </>
+                  ) : (
+                    <>
+                      Sign in <span>→</span>
+                    </>
+                  )}
+                </button>
+              )}
 
               {/* SIGNUP REDIRECT */}
               {!forgotMode && (
