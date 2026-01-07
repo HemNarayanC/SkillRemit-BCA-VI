@@ -101,8 +101,12 @@ const Register = () => {
     }
   };
 
-  const handleContinueWithgGoogle = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+  const handleContinueWithGoogle = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+  };
+
+  const handleContinueWithFacebook = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/facebook`;
   };
 
   return (
@@ -115,7 +119,7 @@ const Register = () => {
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center justify-center px-4 py-8">
         <div className="grid w-full grid-cols-1 overflow-hidden rounded-2xl shadow-2xl lg:grid-cols-[1.4fr_1fr]">
 
-          {/* ================= LEFT: FORM ================= */}
+          {/* Left: Form */}
           <div className="flex flex-col justify-center bg-white p-8 lg:p-12">
             <div className="w-full max-w-md mx-auto">
 
@@ -325,10 +329,10 @@ const Register = () => {
                   Or sign up with
                 </p>
                 <div className="flex gap-2">
-                  <button onClick={handleContinueWithgGoogle} className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm hover:cursor-pointer">
+                  <button onClick={handleContinueWithGoogle} className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm hover:cursor-pointer">
                     <FaGoogle className="text-red-500" /> Google
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm hover:cursor-pointer">
+                  <button onClick={handleContinueWithFacebook} className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm hover:cursor-pointer">
                     <FaFacebookF className="text-blue-600" /> Facebook
                   </button>
                   <button className="flex-1 flex items-center justify-center gap-2 rounded-lg border py-2 text-sm hover:cursor-pointer">
@@ -340,7 +344,7 @@ const Register = () => {
             </div>
           </div>
 
-          {/* ================= RIGHT: LOTTIE ================= */}
+          {/* Right: Animation & Welcome Text */}
           <div className="hidden lg:flex flex-col items-center justify-center bg-navy/5 p-8">
             <div className="flex flex-col items-center mt-auto text-center relative top-18">
               <h1 className="text-3xl lg:text-4xl font-bold font-orbitron text-primary">
