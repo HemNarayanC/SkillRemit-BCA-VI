@@ -1,87 +1,96 @@
-import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const Footer = () => {
-  // Footer sections with links
   const footerSections = [
     {
-      title: 'For Candidates',
+      title: "For Candidates",
       links: [
-        { name: 'Find Jobs', path: '/find-jobs' },
-        { name: 'Dashboard', path: '/candidate-dashboard' },
-        { name: 'My Applications', path: '/applications' },
-        { name: 'Favourite Jobs', path: '/favourite-jobs' },
-        { name: 'My Inbox', path: '/inbox' },
+        { name: "Find Jobs", path: "/find-jobs" },
+        { name: "Dashboard", path: "/candidate-dashboard" },
+        { name: "My Applications", path: "/applications" },
+        { name: "Favourite Jobs", path: "/favourite-jobs" },
+        { name: "My Inbox", path: "/inbox" },
       ],
     },
     {
-      title: 'For Employers',
+      title: "For Employers",
       links: [
-        { name: 'Find Candidates', path: '/find-candidates' },
-        { name: 'Company Dashboard', path: '/company-dashboard' },
-        { name: 'Post a Job', path: '/post-job' },
-        { name: 'Manage Jobs', path: '/manage-jobs' },
+        { name: "Find Candidates", path: "/find-candidates" },
+        { name: "Company Dashboard", path: "/company-dashboard" },
+        { name: "Post a Job", path: "/post-job" },
+        { name: "Manage Jobs", path: "/manage-jobs" },
       ],
     },
     {
-      title: 'Other Demos',
+      title: "Other Demos",
       links: [
-        { name: 'Image Rotator', path: '/demos/image-rotator' },
-        { name: 'Illustration', path: '/demos/illustration' },
-        { name: 'Boxed Hero', path: '/demos/boxed-hero' },
-        { name: 'Image Background', path: '/demos/image-bg' },
-        { name: 'Top Search', path: '/demos/top-search' },
-        { name: 'Image Card', path: '/demos/image-card' },
+        { name: "Image Rotator", path: "/demos/image-rotator" },
+        { name: "Illustration", path: "/demos/illustration" },
+        { name: "Boxed Hero", path: "/demos/boxed-hero" },
+        { name: "Image Background", path: "/demos/image-bg" },
+        { name: "Top Search", path: "/demos/top-search" },
+        { name: "Image Card", path: "/demos/image-card" },
       ],
     },
     {
-      title: 'About Us',
+      title: "About Us",
       links: [
-        { name: 'About Us', path: '/about' },
-        { name: 'Blog', path: '/blog' },
-        { name: 'FAQs', path: '/faqs' },
-        { name: 'Contact Us', path: '/contact' },
-        { name: '404 Page', path: '/404' },
+        { name: "About Us", path: "/about" },
+        { name: "Blog", path: "/blog" },
+        { name: "FAQs", path: "/faqs" },
+        { name: "Contact Us", path: "/contact" },
+        { name: "404 Page", path: "/404" },
       ],
     },
   ];
 
-  // Social media icons
   const socialLinks = [
-    { icon: Facebook, label: 'Facebook', url: '#' },
-    { icon: Twitter, label: 'Twitter', url: '#' },
-    { icon: Instagram, label: 'Instagram', url: '#' },
-    { icon: Linkedin, label: 'LinkedIn', url: '#' },
+    { icon: Facebook, label: "Facebook", path: "/facebook" },
+    { icon: Twitter, label: "Twitter", path: "/twitter" },
+    { icon: Instagram, label: "Instagram", path: "/instagram" },
+    { icon: Linkedin, label: "LinkedIn", path: "/linkedin" },
   ];
 
   return (
-    <footer className="bg-gradient-to-b from-blue-50 to-white">
-      {/* Main Footer Content */}
-      <div className="container mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-          {/* Contact Section */}
-          <div className="lg:col-span-1">
-            <h3 className="text-lg font-bold text-foreground mb-6">Call us</h3>
-            <div className="space-y-3">
-              <p className="text-2xl font-bold text-blue-600">(123) 456-7890</p>
-              <p className="text-sm text-foreground/70">90 Fifth Avenue, 3rd Floor</p>
-              <p className="text-sm text-foreground/70">San Francisco, CA 1980</p>
-              <a href="mailto:office@jobster.com" className="text-sm text-foreground/70 hover:text-foreground transition-colors">
-                office@jobster.com
-              </a>
-            </div>
+    <footer className="bg-background border-t border-border">
+      <div className="mx-auto max-w-7xl px-6 py-16">
+        {/* Top Section */}
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5">
+          {/* Contact */}
+          <div>
+            <h3 className="mb-4 text-lg font-bold text-foreground">
+              Call us
+            </h3>
+            <p className="text-2xl font-bold text-primary">
+              (123) 456-7890
+            </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              90 Fifth Avenue, 3rd Floor
+            </p>
+            <p className="text-sm text-muted-foreground">
+              San Francisco, CA 1980
+            </p>
+            <Link
+              to="/contact"
+              className="mt-2 block text-sm text-muted-foreground hover:text-primary transition"
+            >
+              office@jobster.com
+            </Link>
           </div>
 
-          {/* Footer Sections */}
-          {footerSections.map((section, index) => (
-            <div key={index}>
-              <h4 className="text-sm font-semibold text-foreground mb-4">{section.title}</h4>
+          {/* Link Columns */}
+          {footerSections.map((section) => (
+            <div key={section.title}>
+              <h4 className="mb-4 text-sm font-semibold text-foreground">
+                {section.title}
+              </h4>
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.name}>
                     <Link
                       to={link.path}
-                      className="text-sm text-foreground/70 hover:text-foreground transition-colors duration-200"
+                      className="text-sm text-muted-foreground hover:text-primary transition"
                     >
                       {link.name}
                     </Link>
@@ -93,28 +102,27 @@ const Footer = () => {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-foreground/10"></div>
+        <div className="my-10 border-t border-border" />
 
-        {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row items-center justify-between pt-8">
-          {/* Copyright */}
-          <p className="text-sm text-foreground/60">
-            © 2025 DeshSkill. All Right Reserved.
+        {/* Bottom */}
+        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+          <p className="text-sm text-muted-foreground">
+            © 2025 DeshSkill. All Rights Reserved.
           </p>
 
           {/* Social Icons */}
-          <div className="flex items-center gap-4 mt-6 md:mt-0">
+          <div className="flex gap-4">
             {socialLinks.map((social) => {
               const Icon = social.icon;
               return (
-                <a
+                <Link
                   key={social.label}
-                  href={social.url}
+                  to={social.path}
                   aria-label={social.label}
-                  className="w-8 h-8 flex items-center justify-center text-foreground/60 hover:text-blue-600 transition-colors duration-200 hover:scale-110"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary transition"
                 >
-                  <Icon size={20} />
-                </a>
+                  <Icon size={18} />
+                </Link>
               );
             })}
           </div>
