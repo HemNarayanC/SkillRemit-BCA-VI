@@ -16,8 +16,8 @@ const login = async (data) => {
   try {
     const response = await api.post(
       `/auth/login`,
-      { email: data.email, password: data.password },
-      { withCredentials: true } // important for cookie
+      { identifier: data.identifier, password: data.password },
+      { withCredentials: true }
     );
     return response.data;
   } catch (err) {
