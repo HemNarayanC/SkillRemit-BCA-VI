@@ -55,29 +55,54 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    // Find user
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!identifier || !password) {
+      return res.status(400).json({ message: "Identifier and password are required." });
+    }
+
+    // Detect email vs phone
+    const isEmail = identifier.includes("@");
+
+    const user = await User.findOne({
+      where: isEmail
+        ? { email: identifier }
+        : { phone: identifier }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
     // Must be verified
-    if (!user.is_verified)
-      return res.status(403).json({ message: "Account not verified. Please check your email for OTP." });
+    if (!user.is_verified) {
+      return res.status(403).json({
+        message: "Account not verified. Please check your email for OTP."
+      });
+    }
+
+    // Password must exist (important for OAuth users)
+    if (!user.password_hash) {
+      return res.status(400).json({
+        message: "Password not set. Please login using social login or set a password."
+      });
+    }
 
     // Check password
     const isMatch = await comparePassword(password, user.password_hash);
-    if (!isMatch) return res.status(401).json({ message: "Invalid password." });
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
 
     // Generate JWT
     const token = generateToken(user);
 
-    // Set cookie
-    res.cookie('jwt', token, {
-      httpOnly: true,   // JS cannot access
-      secure: process.env.NODE_ENV === 'production', // HTTPS only
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    // Cookie
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000
     });
 
     return res.json({
@@ -87,6 +112,7 @@ const loginUser = async (req, res) => {
         user_id: user.user_id,
         full_name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
         profile: user.profile_image,
         language: user.language
@@ -94,7 +120,7 @@ const loginUser = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Login error:", err);
     return res.status(500).json({ message: "Server error." });
   }
 };
