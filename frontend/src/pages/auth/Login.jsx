@@ -1,15 +1,30 @@
 import { useState } from "react";
 import Lottie from "lottie-react";
-import { Eye, EyeOff, Lock, Mail, KeyRound } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, KeyRound, Phone } from "lucide-react";
 import { FaGoogle, FaFacebookF, FaLinkedinIn } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+
+  const getIdentifierIcon = (value) => {
+    if (!value) return <Mail size={18} />;
+
+    if (value.includes("@")) {
+      return <Mail size={18} />;
+    }
+
+    if (/^[+\d]/.test(value)) {
+      return <Phone size={18} />;
+    }
+
+    return <Mail size={18} />;
+  };
+
   const { login, forgotPassword } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: "",
+    identifier: "",
     password: "",
     rememberMe: false,
   });
@@ -32,7 +47,7 @@ const Login = () => {
     setErrors({});
 
     const newErrors = {};
-    if (!formData.email) newErrors.email = "Email is required";
+    if (!formData.identifier) newErrors.identifier = "Email or phone is required";
     if (!forgotMode && !formData.password) newErrors.password = "Password is required";
 
     if (Object.keys(newErrors).length > 0) {
@@ -43,10 +58,14 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await login({ email: formData.email, password: formData.password });
+      const res = await login({
+        identifier: formData.identifier,
+        password: formData.password
+      });
+
       // console.log("Logged in user:", res.user);
       setFormData({
-        email: "",
+        identifier: "",
         password: "",
         rememberMe: false,
       });
@@ -124,24 +143,28 @@ const Login = () => {
               {/* EMAIL */}
               <div>
                 <label className="block text-xs uppercase tracking-wider font-exo font-semibold mb-2 text-muted-foreground">
-                  Email
+                  Email or Phone
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {getIdentifierIcon(formData.identifier)}
+                  </div>
                   <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
+                    type="text"
+                    name="identifier"
+                    value={formData.identifier}
                     onChange={handleChange}
-                    placeholder="meghan.tormund@gmail.com"
+                    placeholder="Email or phone number"
                     className={`w-full pl-7 py-2 border-0 border-b-2 bg-card focus:outline-none ${errors.email
                       ? "border-destructive"
                       : "border-border focus:border-primary"
                       }`}
                   />
                 </div>
-                {errors.email && (
-                  <p className="text-destructive text-xs mt-1">{errors.email}</p>
+                {errors.identifier && (
+                  <p className="text-destructive text-xs mt-1">
+                    {errors.identifier}
+                  </p>
                 )}
               </div>
 
