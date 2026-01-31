@@ -1,9 +1,10 @@
 import { useState } from "react";
 import Lottie from "lottie-react";
-import { Eye, EyeOff, Lock, Mail, KeyRound, Phone } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, KeyRound, Phone, User, Briefcase, GraduationCap, ShieldUser } from "lucide-react";
 import { FaGoogle, FaFacebookF, FaLinkedinIn } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { REGISTER_ROUTE, RESET_PASSWORD_ROUTE } from "../../constant/routes";
 
 const Login = () => {
 
@@ -27,12 +28,28 @@ const Login = () => {
     identifier: "",
     password: "",
     rememberMe: false,
+    role: "jobseeker"
   });
+
+  const roles = [
+    { id: "jobseeker", label: "Job Seeker" },
+    { id: "employer", label: "Employer" },
+    { id: "trainer", label: "Trainer" },
+    { id: "admin", label: "Admin" },
+  ];
+
+  const roleIcons = {
+    jobseeker: <User size={16} />,
+    employer: <Briefcase size={16} />,
+    trainer: <GraduationCap size={16} />,
+    admin: <ShieldUser size={16} />,
+  };
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [forgotMode, setForgotMode] = useState(false);
+  const [serverError, setServerError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -45,6 +62,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
+    setServerError(null);
 
     const newErrors = {};
     if (!formData.identifier) newErrors.identifier = "Email or phone is required";
@@ -58,16 +76,19 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // Send identifier, password and selected role to backend via auth context
       const res = await login({
         identifier: formData.identifier,
-        password: formData.password
+        password: formData.password,
+        role: formData.role,
+        rememberMe: formData.rememberMe
       });
 
-      // console.log("Logged in user:", res.user);
       setFormData({
         identifier: "",
         password: "",
         rememberMe: false,
+        role: "jobseeker"
       });
       navigate('/');
     } catch (err) {
@@ -80,19 +101,26 @@ const Login = () => {
 
   const handleForgotPassword = async () => {
     setErrors({});
+    setServerError(null);
 
-    if (!formData.email) {
-      setErrors({ email: "Email is required" });
+    if (!formData.identifier) {
+      setErrors({ identifier: "Email is required" });
+      return;
+    }
+
+    // basic validation to ensure identifier is email for forgot flow
+    if (!formData.identifier.includes("@")) {
+      setErrors({ identifier: "Please provide an email address to reset password" });
       return;
     }
 
     setLoading(true);
     try {
-      const res = await forgotPassword(formData.email); // call API
+      const res = await forgotPassword(formData.identifier); // call API
       alert(res.message); // "OTP sent to your email"
 
       // Navigate to Reset Password page with email
-      navigate("/auth/reset-password", { state: { email: formData.email } });
+      navigate(RESET_PASSWORD_ROUTE, { state: { email: formData.identifier } });
 
     } catch (err) {
       console.error(err);
@@ -134,6 +162,24 @@ const Login = () => {
           {/* RIGHT – FORM */}
           <div className="flex flex-col justify-center bg-card px-10 py-12">
 
+            {/* Role Tabs (compact) */}
+            <div className="flex justify-center gap-4 my-8">
+              {roles.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, role: r.id }))}
+                  className={`flex items-center gap-1 rounded-lg border px-3 py-1 text-sm transition
+                        ${formData.role === r.id
+                      ? "border-blue-600 bg-blue-50 text-blue-600"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                >
+                  {roleIcons[r.id]} {r.label}
+                </button>
+              ))}
+            </div>
+
             <h1 className="mb-8 text-3xl font-orbitron font-bold text-foreground">
               {forgotMode ? "Forgot password" : ""}
             </h1>
@@ -155,7 +201,7 @@ const Login = () => {
                     value={formData.identifier}
                     onChange={handleChange}
                     placeholder="Email or phone number"
-                    className={`w-full pl-7 py-2 border-0 border-b-2 bg-card focus:outline-none ${errors.email
+                    className={`w-full pl-7 py-2 border-0 border-b-2 bg-card focus:outline-none ${errors.identifier
                       ? "border-destructive"
                       : "border-border focus:border-primary"
                       }`}
@@ -201,6 +247,11 @@ const Login = () => {
                 </div>
               )}
 
+              {/* server error */}
+              {serverError && (
+                <p className="text-destructive text-sm mt-1">{serverError}</p>
+              )}
+
               {/* REMEMBER & FORGOT */}
               {!forgotMode && (
                 <div className="flex items-center justify-between pt-2">
@@ -220,7 +271,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setForgotMode(true)}
-                    className="flex items-center gap-1 text-sm font-medium text-primary"
+                    className="flex items-center gap-1 text-sm font-medium text-primary hover:cursor-pointer hover:underline"
                   >
                     <KeyRound size={14} /> Forgot password?
                   </button>
@@ -246,7 +297,7 @@ const Login = () => {
                 </button>
               ) : (
                 <button
-                  type="submit" // Important: type="submit" calls form's onSubmit
+                  type="submit"
                   disabled={loading}
                   className="mt-8 w-full rounded-full bg-primary py-3 font-exo font-semibold text-primary-foreground transition hover:bg-secondary flex items-center justify-center gap-2"
                 >
@@ -267,12 +318,12 @@ const Login = () => {
               {!forgotMode && (
                 <p className="mt-6 text-center text-sm font-exo text-muted-foreground">
                   Don't have an account?{" "}
-                  <a
-                    href="/auth/register"
+                  <Link
+                    to={REGISTER_ROUTE}
                     className="text-primary font-semibold hover:underline"
                   >
                     Sign up
-                  </a>
+                  </Link>
                 </p>
               )}
 
@@ -283,7 +334,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setForgotMode(false)}
-                    className="text-primary font-semibold"
+                    className="text-primary font-semibold hover:cursor-pointer hover:underline"
                   >
                     Sign in
                   </button>
