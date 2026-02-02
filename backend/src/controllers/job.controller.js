@@ -1,4 +1,4 @@
-import { Job, Employer } from '../models/index.js';
+import { Job, Employer, User, JobApplication } from '../models/index.js';
 // Create a new job
 export const createJob = async (req, res) => {
   try {
@@ -93,10 +93,85 @@ export const closeJob = async (req, res) => {
 // Public: List all open jobs
 export const listOpenJobs = async (req, res) => {
   try {
-    const jobs = await Job.findAll({ where: { status: 'open' } });
-    return res.json(jobs);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'Server error' });
+    const { location, skills, salary_min, limit = 50 } = req.query;
+
+    const where = { status: 'open' };
+
+    if (location) {
+      where.location = { [Op.like]: `%${location}%` };
+    }
+
+    if (salary_min) {
+      where.salary_min = { [Op.gte]: parseFloat(salary_min) };
+    }
+
+    const jobs = await Job.findAll({
+      where,
+      include: [
+        {
+          model: Employer,
+          include: [
+            {
+              model: User,
+              attributes: ['name']
+            }
+          ]
+        }
+      ],
+      order: [['created_at', 'DESC']],
+      limit: parseInt(limit)
+    });
+
+    return res.json({ jobs });
+
+  } catch (error) {
+    console.error("List open jobs error:", error);
+    return res.status(500).json({ message: "Server error" + error.message });
   }
 };
+
+export const getJobDetails = async (req, res) => {
+  try {
+    const { job_id } = req.params;
+    console.log(req.user.user_id);
+    const employer = await Employer.findOne({ where: { user_id: req.user.user_id } });
+    if (!employer) {
+      return res.status(404).json({ message: "Employer profile not found" });
+    }
+
+    const job = await Job.findOne({
+      where: {
+        job_id: job_id,
+        employer_id: employer.employer_id
+      }
+    });
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found or unauthorized" });
+    }
+
+    const applicationsCount = await JobApplication.count({
+      where: { job_id: job_id }
+    });
+
+    const statusCounts = {
+      pending: await JobApplication.count({ where: { job_id: job_id, status: 'pending' } }),
+      shortlisted: await JobApplication.count({ where: { job_id: job_id, status: 'shortlisted' } }),
+      rejected: await JobApplication.count({ where: { job_id: job_id, status: 'rejected' } }),
+      hired: await JobApplication.count({ where: { job_id: job_id, status: 'hired' } })
+    };
+
+    return res.json({
+      job,
+      stats: {
+        total_applications: applicationsCount,
+        ...statusCounts
+      }
+    });
+
+  } catch (error) {
+    console.error("Get job details error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
