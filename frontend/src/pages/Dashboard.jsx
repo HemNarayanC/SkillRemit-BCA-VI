@@ -15,6 +15,7 @@ import JobSeekerMySkills from "./dashboards/jobseeker/MySkills";
 import JobSeekerApplications from "./dashboards/jobseeker/Applications";
 import JobSeekerCertifications from "./dashboards/jobseeker/Certifications";
 import JobSeekerMessages from "./dashboards/jobseeker/Messages";
+import JobSeekerProfile from "./dashboards/jobseeker/JobSeekerProfile";
 
 import EmployerDashboard from "./dashboards/employer/Dashboard";
 import EmployerPostJob from "./dashboards/employer/PostJob";
@@ -25,6 +26,7 @@ import EmployerShortlisted from "./dashboards/employer/Shortlisted";
 import EmployerInterviews from "./dashboards/employer/Interviews";
 import EmployerHiringAnalytics from "./dashboards/employer/HiringAnalytics";
 import EmployerMessages from "./dashboards/employer/Messages";
+import EmployerProfile from "./dashboards/employer/EmployerProfile";
 
 import TrainerDashboard from "./dashboards/trainer/Dashboard";
 import TrainerMyCourses from "./dashboards/trainer/MyCourses";
@@ -34,6 +36,7 @@ import TrainerSkillDemand from "./dashboards/trainer/SkillDemand";
 import TrainerCourseFeedback from "./dashboards/trainer/CourseFeedback";
 import TrainerEarnings from "./dashboards/trainer/Earnings";
 import TrainerMessages from "./dashboards/trainer/Messages";
+// import TrainerProfile from "./dashboards/trainer/TrainerProfile";
 
 import AdminDashboard from "./dashboards/admin/Dashboard";
 import AdminUsersManagement from "./dashboards/admin/UsersManagement";
@@ -44,14 +47,15 @@ import AdminTrainersVerification from "./dashboards/admin/TrainersVerification";
 import AdminPlatformAnalytics from "./dashboards/admin/PlatformAnalytics";
 import AdminReportsLogs from "./dashboards/admin/ReportsLogs";
 import AdminSystemSettings from "./dashboards/admin/SystemSettings";
+import AdminProfile from "./dashboards/admin/AdminProfile";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [activeMenuItem, setActiveMenuItem] = useState("Dashboard");
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
 
-  const userRole = user?.role || "jobseeker";
-
+  const userRole = user?.current_role;
+  
   // Page routing based on role and active menu item
   const pageComponents = {
     jobseeker: {
@@ -64,6 +68,7 @@ const Dashboard = () => {
       Applications: JobSeekerApplications,
       Certifications: JobSeekerCertifications,
       Messages: JobSeekerMessages,
+      "Profile": JobSeekerProfile
     },
     employer: {
       Dashboard: EmployerDashboard,
@@ -75,6 +80,7 @@ const Dashboard = () => {
       Interviews: EmployerInterviews,
       "Hiring Analytics": EmployerHiringAnalytics,
       Messages: EmployerMessages,
+      "Profile": EmployerProfile
     },
     trainer: {
       Dashboard: TrainerDashboard,
@@ -85,6 +91,7 @@ const Dashboard = () => {
       "Course Feedback": TrainerCourseFeedback,
       Earnings: TrainerEarnings,
       Messages: TrainerMessages,
+      // "Profile": TrainerProfile
     },
     admin: {
       Dashboard: AdminDashboard,
@@ -96,6 +103,7 @@ const Dashboard = () => {
       "Platform Analytics": AdminPlatformAnalytics,
       "Reports & Logs": AdminReportsLogs,
       "System Settings": AdminSystemSettings,
+      "Profile": AdminProfile,
     },
   };
 
@@ -144,11 +152,11 @@ const Dashboard = () => {
 
         {/* Common Items */}
         <div className="px-3 py-4" style={{ borderTop: "1px solid var(--color-sidebar-border)" }}>
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-white/10">
+          <div onClick={() => setActiveMenuItem("Profile")} className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-white/10">
             <User className="w-5 h-5" />
             <span className="text-sm">Profile</span>
           </div>
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-white/10">
+          <div onClick={() => setActiveMenuItem("Settings")} className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-white/10">
             <Settings className="w-5 h-5" />
             <span className="text-sm">Settings</span>
           </div>
@@ -243,14 +251,14 @@ const Dashboard = () => {
         {/* Dynamic Content Area */}
         <main className="flex-1 overflow-auto p-6">
           {/* Welcome Banner */}
-          <div className="rounded-2xl p-6 mb-6" style={{ background: "linear-gradient(90deg, var(--color-primary), var(--color-secondary))", color: "var(--color-primary-foreground)" }}>
+          {activeMenuItem === "Dashboard" && <div className="rounded-2xl p-6 mb-6" style={{ background: "linear-gradient(90deg, var(--color-primary), var(--color-secondary))", color: "var(--color-primary-foreground)" }}>
             <h2 className="text-2xl font-bold mb-1" style={{ fontFamily: "Audiowide, Exo, sans-serif" }}>
               Welcome back, {user?.name?.split(" ")[0]}! 👋
             </h2>
             <p style={{ color: "rgba(255,255,255,0.85)" }}>
               Here's what's happening with your {roleLabels[userRole].toLowerCase()} dashboard today.
             </p>
-          </div>
+          </div>}
 
           {/* Dynamic Page Content */}
           {ActivePageComponent && <ActivePageComponent user={user} />}
