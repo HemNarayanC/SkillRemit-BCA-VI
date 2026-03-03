@@ -1,4 +1,4 @@
-import { OTPVerification, User } from '../models/index.js'
+import { Employer, OTPVerification, Trainer, User } from '../models/index.js'
 import { hashPassword, comparePassword } from '../utils/hashPassword.js';
 import { Op } from 'sequelize';
 import dotenv from 'dotenv';
@@ -55,23 +55,41 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { identifier, password } = req.body;
+    const { identifier, password, role: currentRole } = req.body;
 
-    if (!identifier || !password) {
-      return res.status(400).json({ message: "Identifier and password are required." });
+    if (!identifier || !password || !currentRole) {
+      return res.status(400).json({
+        message: "Identifier, password, and role are required."
+      });
     }
 
     // Detect email vs phone
     const isEmail = identifier.includes("@");
 
     const user = await User.findOne({
-      where: isEmail
-        ? { email: identifier }
-        : { phone: identifier }
+      where: {
+        ...(isEmail ? { email: identifier } : { phone: identifier })
+      }
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({
+        message: "User not found for the selected role."
+      });
+    }
+
+    // if (!user.roles.includes(currentRole)) {
+    //   return res.status(403).json({ message: "You do not have access to this role." });
+    // }
+
+    const roles = Array.isArray(user.roles)
+      ? user.roles
+      : JSON.parse(user.roles || "[]");
+
+    if (!roles.includes(currentRole)) {
+      return res.status(403).json({
+        message: "You do not have access to this role."
+      });
     }
 
     // Must be verified
@@ -79,6 +97,46 @@ const loginUser = async (req, res) => {
       return res.status(403).json({
         message: "Account not verified. Please check your email for OTP."
       });
+    }
+
+    // EMPLOYER CHECK
+    if (currentRole === "employer") {
+
+      const employer = await Employer.findOne({
+        where: { user_id: user.user_id }
+      });
+
+      if (!employer) {
+        return res.status(403).json({
+          message: "Employer profile not found."
+        });
+      }
+
+      if (employer.verification_status !== "verified") {
+        return res.status(403).json({
+          message: `Employer account is ${employer.verification_status}.`
+        });
+      }
+    }
+
+    // TRAINER CHECK
+    if (currentRole === "trainer") {
+
+      const trainer = await Trainer.findOne({
+        where: { user_id: user.user_id }
+      });
+
+      if (!trainer) {
+        return res.status(403).json({
+          message: "Trainer profile not found."
+        });
+      }
+
+      if (trainer.verification_status !== "verified") {
+        return res.status(403).json({
+          message: `Trainer account is ${trainer.verification_status}.`
+        });
+      }
     }
 
     // Password must exist (important for OAuth users)
@@ -91,13 +149,15 @@ const loginUser = async (req, res) => {
     // Check password
     const isMatch = await comparePassword(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials." });
+      return res.status(401).json({
+        message: "Invalid credentials."
+      });
     }
 
     // Generate JWT
-    const token = generateToken(user);
+    const token = generateToken(user, currentRole);
 
-    // Cookie
+    // Set cookie
     res.cookie("jwt", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -113,7 +173,8 @@ const loginUser = async (req, res) => {
         full_name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role,
+        role: user.roles,
+        current_role: currentRole,
         profile: user.profile_image,
         language: user.language
       }
@@ -191,10 +252,8 @@ const isAuthenticated = async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    // console.log("Authenticated user from isAuthenticated:", req.user);
-
     // Return user info (from token)
-    const { user_id, email, role } = req.user;
+    const { user_id, email, role, current_role } = req.user;
 
     // Fetch profile_image from DB
     const userFromDb = await User.findOne({
@@ -210,7 +269,7 @@ const isAuthenticated = async (req, res) => {
 
     return res.json({
       authenticated: true,
-      user: { user_id, name, email, role, language, profile_image }
+      user: { user_id, name, email, role, current_role, language, profile_image }
     });
   } catch (err) {
     console.error("Auth check error:", err);
@@ -219,7 +278,7 @@ const isAuthenticated = async (req, res) => {
 };
 
 const getUserProfile = async (req, res) => {
-  console.log("Fetching profile for user_id:", req.user);
+  // console.log("Fetching profile for user_id:", req.user);
   try {
     const user = await User.findOne({
       where: { user_id: req.user.user_id, is_deleted: false },
@@ -246,10 +305,24 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+const setPassword = async (req, res) => {
+  const { password } = req.body;
+  const user = req.user;
+
+  if (user.password_hash) {
+    return res.status(400).json({ message: "Password already set." });
+  }
+
+  user.password_hash = await hashPassword(password);
+  await user.save();
+
+  return res.json({ message: "Password set successfully. You can now login manually." });
+};
+
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    console.log("Received email:", email);
+    // console.log("Received email:", email);
 
     const user = await User.findOne({ where: { email } });
     if (!user) return res.status(404).json({ message: "User not found" });
