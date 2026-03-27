@@ -2,10 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User } from 'lucide-react';
+import { navMenu } from '../constant/navMenu';
+import { LOGIN_ROUTE } from '../constant/routes';
+import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const { user, logout, loading } = useAuth();
+  const { settings } = usePlatformSettings();
+  const platformName = settings?.platform_name;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -14,14 +19,14 @@ const Navbar = () => {
   }, []);
 
   // Define routes for each link
-  const navLinks = [
-    { name: 'Demos', path: '/demos' },
-    { name: 'Find Jobs', path: '/find-jobs' },
-    { name: 'Companies', path: '/companies' },
-    { name: 'Candidates', path: '/candidates' },
-    { name: 'Blog', path: '/blog' },
-    { name: 'Pages', path: '/pages' },
-  ];
+  // const navLinks = [
+  //   { name: 'Demos', path: '/demos' },
+  //   { name: 'Browse Jobs', path: BROWSE_JOB_ROUTE },
+  //   { name: 'Companies', path: '/companies' },
+  //   { name: 'Candidates', path: '/candidates' },
+  //   { name: 'Blog', path: '/blog' },
+  //   { name: 'Dashboard', path: DASHBOARD_ROUTE },
+  // ];
 
   const handleLogout = async () => {
     try {
@@ -39,21 +44,21 @@ const Navbar = () => {
       <div className="container mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="text-2xl font-bold text-foreground tracking-tight">
-          DeshSkill
+          {platformName}
         </Link>
 
         {/* Navigation Links */}
         <div className="hidden lg:flex items-center gap-8">
-          {navLinks.map((link) => (
+          {navMenu.map((link) => (
             <NavLink
-              key={link.name}
-              to={link.path}
+              key={link.label}
+              to={link.route}
               className={({ isActive }) =>
                 `text-foreground/80 hover:text-foreground transition-colors text-sm font-medium ${isActive ? "font-bold text-foreground" : ""
                 }`
               }
             >
-              {link.name}
+              {link.label}
             </NavLink>
           ))}
         </div>
@@ -90,8 +95,8 @@ const Navbar = () => {
             </>
           ) : (
             <Link
-              to="/auth/login"
-              className="px-5 py-2.5 rounded-lg border border-foreground/20 text-background text-sm font-medium hover:bg-foreground hover:text-background transition-all duration-200 bg-[#001F3F]"
+              to={LOGIN_ROUTE}
+              className="px-5 py-2.5 rounded-lg text-background text-sm font-medium hover:bg-foreground hover:text-background transition-all duration-200 bg-[#001F3F]"
             >
               Sign in
             </Link>
