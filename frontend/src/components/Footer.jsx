@@ -63,19 +63,19 @@ const Footer = () => {
               Call us
             </h3>
             <p className="text-2xl font-bold text-primary">
-              (123) 456-7890
+              (+977)9800000000
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
-              90 Fifth Avenue, 3rd Floor
+              Itahari
             </p>
             <p className="text-sm text-muted-foreground">
-              San Francisco, CA 1980
+              Sunsari
             </p>
             <Link
               to="/contact"
               className="mt-2 block text-sm text-muted-foreground hover:text-primary transition"
             >
-              office@jobster.com
+              skillbrige@gmail.com
             </Link>
           </div>
 
@@ -107,7 +107,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            © 2025 DeshSkill. All Rights Reserved.
+            2026 SkillBridge. All Rights Reserved.
           </p>
 
           {/* Social Icons */}
