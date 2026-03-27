@@ -9,6 +9,7 @@ import {
     getPremiumStatus,
     initiatePremiumPayment,
 } from "../../api/premiumApi.js";
+import { usePlatformSettings } from "../../context/PlatformSettingsContext.jsx";
 
 const FEATURES = {
     jobseeker: [
@@ -27,28 +28,19 @@ const FEATURES = {
     ],
 };
 
-const FREE_LIMITS = {
-    jobseeker: [
-        "5 AI match analyses / month",
-        "Standard profile listing",
-        "Unlimited job applications",
-    ],
-    employer: [
-        "5 AI candidate screenings / month",
-        "Up to 10 active job posts",
-        "Basic applicant management",
-    ],
-};
-
 /**
  * PremiumUpgrade modal
  *
  * Props:
- *   role    – "jobseeker" | "employer"  (pass user.current_role from AuthContext)
+ *   role    – "jobseeker" | "employer"
  *   onClose – () => void
  *
- * Fetches live plans + premium status from the API on mount.
- * Calls POST /aipremium/initiate on pay → redirects to Khalti payment_url.
+ * ALL prices come from the backend:
+ *   - Plan cards: built from GET /premium/plans?role=X (live DB prices)
+ *   - Per-month display on yearly card: derived from premiumPrices in
+ *     PlatformSettingsContext (same DB row, already fetched at app start)
+ *   - Free AI check limit: read from settings.free_ai_checks in context
+ *   - Savings %: computed from live monthly price — never hardcoded
  */
 const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
     const [plans, setPlans] = useState([]);
@@ -58,37 +50,64 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
     const [paying, setPaying] = useState(false);
     const [error, setError] = useState("");
 
-    const FREE_LIMIT = 5;
+    // ── Live prices + free AI limit from DB via PlatformSettingsContext ───────
+    // premiumPrices: { seeker: { monthly_npr, yearly_npr }, employer: { monthly_npr, yearly_npr } }
+    // settings.free_ai_checks: integer — replaces the hardcoded FREE_LIMIT = 5
+    const { premiumPrices, settings } = usePlatformSettings();
+
+    // Live monthly price for this role — used to compute yearly savings %.
+    // Falls back to model defaults if context hasn't loaded yet.
+    const liveMonthlyNpr = role === "employer"
+        ? (premiumPrices?.employer?.monthly_npr ?? 999)
+        : (premiumPrices?.seeker?.monthly_npr ?? 299);
+
+    // Free AI check limit read from DB — no hardcoded fallback beyond the model default
+    const freeAiLimit = settings?.free_ai_checks ?? 5;
+
     const features = FEATURES[role] || FEATURES.jobseeker;
-    const freeLimits = FREE_LIMITS[role] || FREE_LIMITS.jobseeker;
     const plan = plans.find(p => p.key === selected);
     const checksUsed = status?.ai_checks_used ?? 0;
-    const checksLimit = status?.ai_checks_limit ?? FREE_LIMIT;
+    const checksLimit = status?.ai_checks_limit ?? freeAiLimit;
     const isPremium = status?.is_premium ?? false;
 
-    // ── fetch plans + status ──────────────────────────────────────────────────
+    // Free plan feature list — uses live freeAiLimit so it stays in sync
+    const freeLimits = role === "employer"
+        ? [
+            `${freeAiLimit} AI candidate screenings / month`,
+            "Up to 10 active job posts",
+            "Basic applicant management",
+        ]
+        : [
+            `${freeAiLimit} AI match analyses / month`,
+            "Standard profile listing",
+            "Unlimited job applications",
+        ];
+
+    // ── Fetch plans + status on mount ─────────────────────────────────────────
     useEffect(() => {
         Promise.allSettled([
-            getPremiumPlans(),
+            getPremiumPlans(role),
             getPremiumStatus(),
         ]).then(([p, s]) => {
             if (p.status === "fulfilled") {
                 const list = p.value?.plans ?? [];
                 setPlans(list);
-                if (list.length) setSelected(list[0].key);
+                const monthly = list.find(pl => pl.key.includes("monthly"));
+                if (monthly) setSelected(monthly.key);
+                else if (list.length) setSelected(list[0].key);
             }
             if (s.status === "fulfilled") setStatus(s.value);
         }).finally(() => setInitLoading(false));
     }, [role]);
 
-    // ── close on Escape ───────────────────────────────────────────────────────
+    // ── Close on Escape ───────────────────────────────────────────────────────
     useEffect(() => {
         const handler = (e) => { if (e.key === "Escape") onClose?.(); };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
     }, [onClose]);
 
-    // ── pay ───────────────────────────────────────────────────────────────────
+    // ── Initiate Khalti payment ───────────────────────────────────────────────
     const handlePay = async () => {
         if (!plan) return;
         setError("");
@@ -106,7 +125,21 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
         if (e.target === e.currentTarget) onClose?.();
     };
 
-    // ── loading ───────────────────────────────────────────────────────────────
+    const getSavingsPct = (planItem) => {
+        if (!planItem?.key?.includes("yearly")) return null;
+        const yearlyNpr = planItem.amount_npr;
+        const equivalentNpr = liveMonthlyNpr * 12;
+        if (equivalentNpr <= 0) return null;
+        const pct = Math.round(((equivalentNpr - yearlyNpr) / equivalentNpr) * 100);
+        return pct > 0 ? pct : null;
+    };
+
+    const getDisplayMonthlyNpr = (planItem) => {
+        if (!planItem?.key?.includes("yearly")) return planItem?.amount_npr ?? 0;
+        return Math.round(planItem.amount_npr / 12);
+    };
+
+    // ── Loading ───────────────────────────────────────────────────────────────
     if (initLoading) return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -129,7 +162,7 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                 className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden"
                 style={{ maxHeight: "92vh", overflowY: "auto" }}
             >
-                {/* ── top bar ── */}
+                {/* ── Top bar ── */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center">
@@ -137,7 +170,7 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                         </div>
                         <div>
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                                {role === "employer" ? "Employer" : "JobSeeker"} Premium
+                                {role === "employer" ? "Employer" : "Job Seeker"} Premium
                             </p>
                             <h2 className="text-base font-extrabold text-slate-800 leading-tight">
                                 Upgrade your account
@@ -152,7 +185,7 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                     </button>
                 </div>
 
-                {/* ── already premium ── */}
+                {/* ── Already premium ── */}
                 {isPremium ? (
                     <div className="flex flex-col items-center py-14 px-8 text-center">
                         <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mb-4">
@@ -174,10 +207,10 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
 
-                        {/* ── LEFT ── */}
+                        {/* ════════════ LEFT COLUMN ════════════ */}
                         <div className="p-6 flex flex-col gap-5">
 
-                            {/* live AI usage bar */}
+                            {/* Live AI usage bar — limit from DB */}
                             <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
                                 <div className="flex justify-between items-center mb-2">
                                     <div className="flex items-center gap-1.5">
@@ -192,10 +225,11 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                                 </div>
                                 <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full transition-all duration-500 ${checksUsed >= checksLimit ? "bg-red-500" :
-                                            checksUsed >= 3 ? "bg-amber-500" : "bg-blue-500"
+                                        className={`h-full rounded-full transition-all duration-500 ${checksUsed >= checksLimit ? "bg-red-500"
+                                                : checksUsed >= checksLimit * 0.6 ? "bg-amber-500"
+                                                    : "bg-blue-500"
                                             }`}
-                                        style={{ width: `${Math.min(100, (checksUsed / (checksLimit || FREE_LIMIT)) * 100)}%` }}
+                                        style={{ width: `${Math.min(100, (checksUsed / (checksLimit || 1)) * 100)}%` }}
                                     />
                                 </div>
                                 {checksUsed >= checksLimit && (
@@ -205,7 +239,7 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                                 )}
                             </div>
 
-                            {/* plan cards — built from API response */}
+                            {/* Plan cards — built entirely from API (prices from DB) */}
                             <div>
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
                                     Choose plan
@@ -213,20 +247,22 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                                 <div className="flex flex-col gap-3">
                                     {plans.map((p) => {
                                         const isActive = selected === p.key;
-                                        const displayPrice = p.monthly_npr ?? p.amount_npr;
-                                        const savings = p.key === "premium_yearly"
-                                            ? Math.round(((299 * 12 - p.amount_npr) / (299 * 12)) * 100)
-                                            : null;
+                                        const isYearly = p.key.includes("yearly");
+                                        // Per-month display: for yearly plans show (yearly ÷ 12)
+                                        const displayMonthly = getDisplayMonthlyNpr(p);
+                                        // Savings badge: computed from live DB monthly price in context
+                                        const savings = getSavingsPct(p);
+
                                         return (
                                             <button
                                                 key={p.key}
                                                 onClick={() => setSelected(p.key)}
                                                 className={`relative w-full text-left rounded-xl border-2 px-4 py-3.5 transition-all ${isActive
-                                                    ? "border-blue-600 bg-blue-50"
-                                                    : "border-slate-200 bg-white hover:border-slate-300"
+                                                        ? "border-blue-600 bg-blue-50"
+                                                        : "border-slate-200 bg-white hover:border-slate-300"
                                                     }`}
                                             >
-                                                {savings && (
+                                                {savings !== null && (
                                                     <span className="absolute -top-2.5 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
                                                         Save {savings}%
                                                     </span>
@@ -238,11 +274,11 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                                                         </p>
                                                         <div className="flex items-baseline gap-1">
                                                             <span className="text-2xl font-extrabold text-slate-900">
-                                                                NPR {Number(displayPrice).toLocaleString()}
+                                                                NPR {Number(displayMonthly).toLocaleString()}
                                                             </span>
                                                             <span className="text-xs text-slate-400">/ month</span>
                                                         </div>
-                                                        {p.key === "premium_yearly" && (
+                                                        {isYearly && (
                                                             <p className="text-[11px] text-slate-400 mt-0.5">
                                                                 Billed NPR {Number(p.amount_npr).toLocaleString()} / year
                                                             </p>
@@ -259,7 +295,7 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                                 </div>
                             </div>
 
-                            {/* free tier comparison */}
+                            {/* Free tier limits — uses live freeAiLimit from DB */}
                             <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2.5">
                                     Free plan includes
@@ -275,7 +311,7 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                             </div>
                         </div>
 
-                        {/* ── RIGHT ── */}
+                        {/* ════════════ RIGHT COLUMN ════════════ */}
                         <div className="p-6 flex flex-col gap-5">
 
                             <div>
@@ -296,7 +332,7 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
 
                             <div className="border-t border-slate-100" />
 
-                            {/* error */}
+                            {/* Error */}
                             {error && (
                                 <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
                                     <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
@@ -304,7 +340,7 @@ const PremiumUpgrade = ({ role = "jobseeker", onClose }) => {
                                 </div>
                             )}
 
-                            {/* summary */}
+                            {/* Payment summary — amount_npr comes directly from the API (live DB price) */}
                             <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-slate-400 font-medium">You're paying</p>
